@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Coffee and Snacks</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom CSS for layout and styling adjustments */
+        .menu-category.active {
+            background-color: #f5f5f5;
+            color: #e67e22;
+            font-weight: 600;
+        }
+        .menu-item-image {
+            height: 120px;
+            object-fit: cover;
+            border-radius: 8px;
+        }
+        .larger-image {
+            height: 200px;
+        }
+        .menu-item-name {
+            font-size: 1rem;
+            font-weight: 500;
+            color: #333;
+        }
+        .menu-item-price {
+            font-size: 1rem;
+            color: #e67e22;
+            font-weight: 600;
+        }
+        .quantity-btn {
+            @apply px-2 py-1 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 text-orange-600;
+        }
+        .quantity-input {
+            @apply w-16 text-center border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 text-gray-700;
+        }
+        .menu-item-quantity-container {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 8px;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 font-inter">
+    <div class="container mx-auto p-4 md:p-6 lg:p-8">
+        <header class="flex items-center justify-between mb-6">
+            <div class="flex items-center">
+                <img src="08052021-05_generated.jpg" alt="Coffee Logo" class="h-8 mr-4">
+                <span class="text-xl font-bold text-gray-800">MACCHAPELING</span>
+            </div>
+        </header>
+
+        <div class="flex flex-col md:flex-row">
+            <aside class="md:w-64 pr-4 mb-4 md:mb-0">
+                <ul class="space-y-2">
+                    <li class="menu-category px-4 py-2 rounded-md cursor-pointer hover:bg-gray-200 transition-colors" data-category="featured">Featured</li>
+                    <li class="menu-category px-4 py-2 rounded-md cursor-pointer hover:bg-gray-200 transition-colors" data-category="coffee">Coffee</li>
+                    <li class="menu-category px-4 py-2 rounded-md cursor-pointer hover:bg-gray-200 transition-colors" data-category="snacks">Snacks</li>
+                    <li class="menu-category px-4 py-2 rounded-md cursor-pointer hover:bg-gray-200 transition-colors" data-category="pastries">Pastries</li>
+                    <li class="menu-category px-4 py-2 rounded-md cursor-pointer hover:bg-gray-200 transition-colors" data-category="drinks">Drinks</li>
+                     <li class="menu-category px-4 py-2 rounded-md cursor-pointer hover:bg-gray-200 transition-colors" data-category="tea">Tea</li>
+                    <li class="menu-category px-4 py-2 rounded-md cursor-pointer hover:bg-gray-200 transition-colors" data-category="smoothies">Smoothies</li>
+                    <li class="menu-category px-4 py-2 rounded-md cursor-pointer hover:bg-gray-200 transition-colors" data-category="extras">Extras</li>
+                </ul>
+            </aside>
+
+            <main class="flex-1">
+                <div class="bg-white rounded-lg shadow-md p-4 md:p-6" id="menu-container">
+                    <div class="mb-6">
+                        <ul class="flex space-x-4 overflow-x-auto sub-menu">
+                            <li class="text-gray-700 font-semibold cursor-pointer hover:text-orange-500 transition-colors flex-shrink-0" data-sub-category="all">All</li>
+                        </ul>
+                    </div>
+
+                    <div class="mb-8 p-4 md:p-6 bg-gray-50 rounded-lg flex flex-col md:flex-row items-center gap-4 featured-item" >
+                        <img src="kps.jpg" alt="Featured Coffee" class="larger-image rounded-lg w-full md:w-1/2">
+                        <div class="md:w-1/2">
+                            <h2 class="text-2xl font-bold text-gray-800 mb-2">Featured Coffee</h2>
+                            <p class="text-gray-600 mb-4">A delicious blend of...</p>
+                            <p class="text-xl font-bold text-orange-600">₱ 150</p>
+                            <div class="menu-item-quantity-container">
+                                <button class="quantity-btn decrease-btn">-</button>
+                                <input type="number" min="0" value="0" class="quantity-input item-quantity">
+                                <button class="quantity-btn increase-btn">+</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 menu-item-grid">
+                    </div>
+                </div>
+            </main>
+        </div>
+
+        <footer class="fixed bottom-0 left-0 right-0 bg-white shadow-md p-4 flex justify-between items-center">
+            <button id="show-basket" class="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded-md flex items-center">
+                Show Basket (<span id="basket-item-count">0</span>)
+            </button>
+            <button id="place-order" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-6 rounded-md">
+                Place Order <span id="order-total">₱ 0.00</span>
+            </button>
+            <button id="restart-order" class="text-gray-600 hover:text-red-600 font-semibold">
+                Restart
+            </button>
+        </footer>
+    </div>
+
+    <script>
+       const menuCategories = document.querySelectorAll('.menu-category');
+        const menuContainer = document.getElementById('menu-container');
+        const basketItemCountSpan = document.getElementById('basket-item-count');
+        const orderTotalSpan = document.getElementById('order-total');
+        const showBasketButton = document.getElementById('show-basket');
+        const placeOrderButton = document.getElementById('place-order');
+        const restartOrderButton = document.getElementById('restart-order');
+        const subMenuContainer = document.querySelector('.sub-menu');
+        const menuItemGrid = document.querySelector('.menu-item-grid');
+        const featuredItemContainer = document.querySelector('.featured-item');
+
+
+        let basket = [];
+        let totalItemsInBasket = 0;
+        let orderTotal = 0.00;
+        let currentCategory = 'featured';
+
+        const menuData = {
+            featured: [
+                { name: "Featured Coffee", price: 150, description: "A delicious blend of...", image: "https://via.placeholder.com/400x300?text=FeaturedCoffee" },
+            ],
+            coffee: [
+                { name: "Espresso", price: 50, image: "https://via.placeholder.com/150?text=Espresso" },
+                { name: "Latte", price: 80, image: "https://via.placeholder.com/150?text=Latte" },
+                { name: "Cappuccino", price: 75, image: "https://via.placeholder.com/150?text=Cappuccino" },
+                { name: "Iced Latte", price: 90, image: "https://via.placeholder.com/150?text=IcedLatte" },
+                { name: "Iced Coffee", price: 85, image: "https://via.placeholder.com/150?text=IcedCoffee" },
+            ],
+            snacks: [
+                { name: "Muffin", price: 30, image: "https://via.placeholder.com/150?text=Muffin" },
+                { name: "Croissant", price: 40, image: "https://via.placeholder.com/150?text=Croissant" },
+                { name: "Sandwich", price: 60, image: "https://via.placeholder.com/150?text=Sandwich" },
+            ],
+             pastries: [
+                { name: "Cake Slice", price: 55, image: "https://via.placeholder.com/150?text=CakeSlice" },
+                { name: "Donut", price: 25, image: "https://via.placeholder.com/150?text=Donut" },
+                { name: "Brownie", price: 35, image: "https://via.placeholder.com/150?text=Brownie" },
+            ],
+            drinks: [
+                { name: "Soda", price: 20, image: "https://via.placeholder.com/150?text=Soda" },
+                { name: "Juice", price: 30, image: "https://via.placeholder.com/150?text=Juice" },
+                { name: "Water", price: 15, image: "https://via.placeholder.com/150?text=Water" },
+            ],
+            tea: [
+                { name: "Black Tea", price: 45, image: "https://via.placeholder.com/150?text=BlackTea" },
+                { name: "Green Tea", price: 45, image: "https://via.placeholder.com/150?text=GreenTea" },
+                { name: "Herbal Tea", price: 50, image: "https://via.placeholder.com/150?text=HerbalTea" },
+            ],
+            smoothies: [
+                { name: "Fruit Smoothie", price: 100, image: "https://via.placeholder.com/150?text=FruitSmoothie" },
+                { name: "Green Smoothie", price: 110, image: "https://via.placeholder.com/150?text=GreenSmoothie" },
+                { name: "Protein Smoothie", price: 120, image: "https://via.placeholder.com/150?text=ProteinSmoothie" },
+            ],
+            extras: [
+                { name: "Cream", price: 10, image: "https://via.placeholder.com/150?text=Cream" },
+                { name: "Sugar", price: 5, image: "https://via.placeholder.com/150?text=Sugar" },
+                { name: "Milk", price: 10, image: "https://via.placeholder.com/150?text=Milk" },
+            ],
+        };
+
+        menuCategories.forEach(category => {
+            category.addEventListener('click', function() {
+                menuCategories.forEach(c => c.classList.remove('active'));
+                this.classList.add('active');
+                currentCategory = this.dataset.category;
+                updateMenu(currentCategory);
+            });
+        });
+
+        function updateMenu(category) {
+            menuItemGrid.innerHTML = '';
+            subMenuContainer.innerHTML = '<li class="text-gray-700 font-semibold cursor-pointer hover:text-orange-500 transition-colors flex-shrink-0 all-sub-menu" data-sub-category="all">All</li>';
+             featuredItemContainer.style.display = 'none';
+
+            let items = menuData[category];
+            if(category === 'featured'){
+                 featuredItemContainer.style.display = 'flex';
+                 items = menuData['coffee'];
+            }
+
+            const subCategories = new Set();
+            items.forEach(item => {
+                const itemParts = item.name.split(' ');
+                if (itemParts.length > 1) {
+                    subCategories.add(itemParts[0].toLowerCase());
+                }
+            });
+            subCategories.forEach(subCat => {
+                const newSubMenu = document.createElement('li');
+                newSubMenu.classList.add('text-gray-700', 'font-semibold', 'cursor-pointer', 'hover:text-orange-500', 'transition-colors', 'flex-shrink-0', `${subCat}-sub-menu`);
+                newSubMenu.textContent = subCat.charAt(0).toUpperCase() + subCat.slice(1);
+                newSubMenu.dataset.subCategory = subCat;
+                subMenuContainer.appendChild(newSubMenu);
+            });
+
+            const allSubMenu = document.querySelector('.all-sub-menu');
+            allSubMenu.addEventListener('click', () => {
+                menuItemGrid.innerHTML = '';
+                 items.forEach(item => {
+                    const itemCard = createMenuItemCard(item);
+                    menuItemGrid.appendChild(itemCard);
+                });
+            });
+
+            const subMenuItems = document.querySelectorAll('.sub-menu li');
+            subMenuItems.forEach(subMenuItem => {
+                subMenuItem.addEventListener('click', (event) => {
+                    const subCategory = event.target.dataset.subCategory;
+                    menuItemGrid.innerHTML = '';
+                    if (subCategory === 'all') {
+                         items.forEach(item => {
+                            const itemCard = createMenuItemCard(item);
+                            menuItemGrid.appendChild(itemCard);
+                        });
+                    } else {
+                        items.filter(item => item.name.toLowerCase().includes(subCategory)).forEach(item => {
+                            const itemCard = createMenuItemCard(item);
+                            menuItemGrid.appendChild(itemCard);
+                        });
+                    }
+                });
+            });
+            items.forEach(item => {
+                const itemCard = createMenuItemCard(item);
+                menuItemGrid.appendChild(itemCard);
+            });
+        }
+
+        function createMenuItemCard(item) {
+            const itemCard = document.createElement('div');
+            itemCard.className = 'flex flex-col items-center bg-gray-50 p-4 rounded-lg shadow-md menu-item-card';
+            itemCard.dataset.itemName = item.name;
+            itemCard.dataset.itemPrice = item.price;
+
+            const itemImage = document.createElement('img');
+            itemImage.className = 'menu-item-image w-full';
+            itemImage.src = item.image;
+            itemImage.alt = item.name;
+
+            const itemNameElement = document.createElement('h3');
+            itemNameElement.className = 'menu-item-name mt-2 text-center';
+            itemNameElement.textContent = item.name;
+
+            const itemPriceElement = document.createElement('p');
+            itemPriceElement.className = 'menu-item-price mt-1';
+            itemPriceElement.textContent = `₱ ${item.price}`;
+
+            const quantityContainer = document.createElement('div');
+            quantityContainer.className = 'menu-item-quantity-container';
+
+            const decreaseButton = document.createElement('button');
+            decreaseButton.className = 'quantity-btn decrease-btn';
+            decreaseButton.textContent = '-';
+
+            const quantityInput = document.createElement('input');
+            quantityInput.type = 'number';
+            quantityInput.min = '0';
+            quantityInput.value = '0';
+            quantityInput.className = 'quantity-input item-quantity';
+
+            const increaseButton = document.createElement('button');
+            increaseButton.className = 'quantity-btn increase-btn';
+            increaseButton.textContent = '+';
+
+            quantityContainer.appendChild(decreaseButton);
+            quantityContainer.appendChild(quantityInput);
+            quantityContainer.appendChild(increaseButton);
+
+            itemCard.appendChild(itemImage);
+            itemCard.appendChild(itemNameElement);
+            itemCard.appendChild(itemPriceElement);
+            itemCard.appendChild(quantityContainer);
+
+            // Event listeners for quantity buttons and input
+            increaseButton.addEventListener('click', () => {
+                let quantity = parseInt(quantityInput.value);
+                quantity++;
+                quantityInput.value = quantity;
+                updateBasket(item.name, quantity, item.price);
+            });
+
+            decreaseButton.addEventListener('click', () => {
+                let quantity = parseInt(quantityInput.value);
+                if (quantity > 0) {
+                    quantity--;
+                    quantityInput.value = quantity;
+                    updateBasket(item.name, quantity, item.price);
+                }
+            });
+
+            quantityInput.addEventListener('change', () => {
+                let quantity = parseInt(quantityInput.value);
+                if (quantity < 0) {
+                    quantity = 0;
+                    quantityInput.value = 0;
+                }
+                updateBasket(item.name, quantity, item.price);
+            });
+
+            return itemCard;
+        }
+
+        function updateBasket(itemName, quantity, itemPrice) {
+            let itemInBasket = basket.find(item => item.name === itemName);
+
+            if (itemInBasket) {
+                itemInBasket.quantity = quantity;
+            } else if (quantity > 0) {
+                basket.push({ name: itemName, quantity: quantity, price: itemPrice });
+            }
+
+            if (quantity === 0) {
+                basket = basket.filter(item => item.name !== itemName);
+            }
+
+            totalItemsInBasket = basket.reduce((sum, item) => sum + item.quantity, 0);
+            orderTotal = basket.reduce((sum, item) => sum + (item.quantity * item.price), 0).toFixed(2);
+
+            basketItemCountSpan.textContent = totalItemsInBasket;
+            orderTotalSpan.textContent = `₱ ${orderTotal}`;
+        }
+
+        showBasketButton.addEventListener('click', () => {
+            if (basket.length === 0) {
+                alert('Your basket is empty!');
+            } else {
+                let basketDetails = "Items in your basket:\n";
+                basket.forEach(item => {
+                    basketDetails += `${item.name}: ${item.quantity} x ₱${item.price} = ₱${(item.quantity * item.price).toFixed(2)}\n`;
+                });
+                basketDetails += `\nTotal: ₱${orderTotal}`;
+                alert(basketDetails);
+            }
+        });
+
+        placeOrderButton.addEventListener('click', () => {
+            if (basket.length === 0) {
+                alert('Your basket is empty! Add some items to place an order.');
+            } else {
+                alert(`Your order of ₱${orderTotal} has been placed!`);
+                basket = [];
+                totalItemsInBasket = 0;
+                orderTotal = 0.00;
+                basketItemCountSpan.textContent = totalItemsInBasket;
+                orderTotalSpan.textContent = `₱ ${orderTotal}`;
+                menuItems.forEach(itemCard => {
+                    const quantityInput = itemCard.querySelector('.item-quantity');
+                    quantityInput.value = 0;
+                });
+            }
+        });
+
+        restartOrderButton.addEventListener('click', () => {
+            basket = [];
+            totalItemsInBasket = 0;
+            orderTotal = 0.00;
+            basketItemCountSpan.textContent = totalItemsInBasket;
+            orderTotalSpan.textContent = `₱ ${orderTotal}`;
+            menuItems.forEach(itemCard => {
+                const quantityInput = itemCard.querySelector('.item-quantity');
+                quantityInput.value = 0;
+            });
+            alert('Order restarted. Your basket is now empty.');
+        });
+
+        updateMenu(currentCategory);
+    </script>
+</body>
+</html>
