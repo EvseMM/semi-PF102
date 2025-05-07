@@ -1,5 +1,3 @@
-<!DOCTYPE html>
-<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -43,6 +41,11 @@
             gap: 8px;
             margin-top: 8px;
         }
+        #place-order:active {
+            background-color: #d35400; /* A slightly darker shade of orange */
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2); /* A smaller shadow when pressed */
+            transform: translateY(1px); /* Slightly move the button down */
+        }
     </style>
 </head>
 <body class="bg-gray-100 font-inter">
@@ -71,7 +74,7 @@
                 <div class="bg-white rounded-lg shadow-md p-4 md:p-6" id="menu-container">
                     <div class="mb-6">
                         <ul class="flex space-x-4 overflow-x-auto sub-menu">
-                            <li class="text-gray-700 font-semibold cursor-pointer hover:text-orange-500 transition-colors flex-shrink-0" data-sub-category="all">All</li>
+                            <li class="text-gray-700 font-semibold cursor-pointer hover:text-orange-500 transition-colors flex-shrink-0 all-sub-menu active-sub-menu" data-sub-category="all">All</li>
                         </ul>
                     </div>
 
@@ -79,6 +82,40 @@
                     </div>
                 </div>
             </main>
+        </div>
+
+        <div id="order-modal" class="fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 z-50 hidden flex justify-center items-center">
+            <div class="bg-white rounded-lg shadow-lg p-8 md:p-12 w-full max-w-md">
+                <h2 class="text-xl font-bold text-gray-800 mb-4">Review Your Order</h2>
+                <div id="order-summary-content" class="mb-4 text-gray-700">
+                    </div>
+                <div class="flex justify-end gap-4">
+                    <button id="cancel-order-modal" class="px-4 py-2 rounded-md text-gray-600 hover:text-gray-800">Cancel</button>
+                    <button id="confirm-order-modal" class="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded-md">Confirm Order</button>
+                </div>
+                <div id="payment-options" class="mt-6 hidden">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-2">Choose Payment Method</h3>
+                    <div class="space-y-2">
+                        <button id="bank-transfer-btn" class="w-full py-2 px-4 rounded-md bg-gray-200 hover:bg-gray-300 text-gray-700">Bank Transfer (Simulated)</button>
+                        <button id="online-payment-btn" class="w-full py-2 px-4 rounded-md bg-gray-200 hover:bg-gray-300 text-gray-700">Online Payment (Simulated)</button>
+                    </div>
+                    <div id="payment-confirmation" class="mt-4 hidden">
+                        <p id="payment-message" class="text-gray-700"></p>
+                        <div class="flex justify-end mt-4 gap-4">
+                            <button id="cancel-payment" class="px-4 py-2 rounded-md text-gray-600 hover:text-gray-800">Cancel</button>
+                            <button id="confirm-payment-btn" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-md">Confirm Payment</button>
+                        </div>
+                    </div>
+                </div>
+                <div id="receipt-modal" class="mt-6 hidden">
+                    <h2 class="text-xl font-bold text-gray-800 mb-4">Order Receipt</h2>
+                    <div id="receipt-content" class="text-gray-700 whitespace-pre-line">
+                        </div>
+                    <div class="flex justify-end mt-4">
+                        <button id="close-receipt-btn" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-md">Close</button>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <footer class="fixed bottom-0 left-0 right-0 bg-white shadow-md p-4 flex justify-between items-center">
@@ -95,70 +132,87 @@
     </div>
 
     <script>
-       const menuCategories = document.querySelectorAll('.menu-category');
-const menuContainer = document.getElementById('menu-container');
-const basketItemCountSpan = document.getElementById('basket-item-count');
-const orderTotalSpan = document.getElementById('order-total');
-const showBasketButton = document.getElementById('show-basket');
-const placeOrderButton = document.getElementById('place-order');
-const restartOrderButton = document.getElementById('restart-order');
-const subMenuContainer = document.querySelector('.sub-menu');
-const menuItemGrid = document.querySelector('.menu-item-grid');
-const featuredItemContainer = document.querySelector('.featured-item'); // Keep this for removal
+        const menuCategories = document.querySelectorAll('.menu-category');
+        const menuContainer = document.getElementById('menu-container');
+        const basketItemCountSpan = document.getElementById('basket-item-count');
+        const orderTotalSpan = document.getElementById('order-total');
+        const showBasketButton = document.getElementById('show-basket');
+        const placeOrderButton = document.getElementById('place-order');
+        const restartOrderButton = document.getElementById('restart-order');
+        const subMenuContainer = document.querySelector('.sub-menu');
+        const menuItemGrid = document.querySelector('.menu-item-grid');
+        const featuredItemContainer = document.querySelector('.featured-item'); // Keep this for removal
 
-let basket = [];
-let totalItemsInBasket = 0;
-let orderTotal = 0.00;
-let currentCategory = 'coffee'; // Set initial category
+        const orderModal = document.getElementById('order-modal');
+        const orderSummaryContent = document.getElementById('order-summary-content');
+        const cancelOrderModalButton = document.getElementById('cancel-order-modal');
+        const confirmOrderModalButton = document.getElementById('confirm-order-modal');
+        const paymentOptionsDiv = document.getElementById('payment-options');
+        const bankTransferButton = document.getElementById('bank-transfer-btn');
+        const onlinePaymentButton = document.getElementById('online-payment-btn');
+        const paymentConfirmationDiv = document.getElementById('payment-confirmation');
+        const paymentMessageParagraph = document.getElementById('payment-message');
+        const cancelPaymentButton = document.getElementById('cancel-payment');
+        const confirmPaymentButton = document.getElementById('confirm-payment-btn');
+        const receiptModalDiv = document.getElementById('receipt-modal');
+        const receiptContentDiv = document.getElementById('receipt-content');
+        const closeReceiptButton = document.getElementById('close-receipt-btn');
 
-const menuData = {
-    coffee: [
-        { name: "Espresso", price: 50, image: "https://www.lasabbq.com/cdn/shop/products/espresso.jpg?v=1660633495&width=823" },
-        { name: "Latte", price: 80, image: "kps.jpg" },
-        { name: "Cappuccino", price: 75, image: "https://blogstudio.s3.theshoppad.net/coffeeheroau/a450e2617a5f31cf16d3a178f9cf8451.jpg" },
-        { name: "Iced Latte", price: 90, image: "ays late.jpg" },
-        { name: "Iced Americano", price: 85, image: "ame.jpg" },
-        { name: "Iced Caramel Macchiato", price: 110, image: "https://awsimages.detik.net.id/community/media/visual/2022/07/18/caramel-latte-vs-caramel-macchiato-1.jpeg?w=1200" },
-    ],
-    snacks: [
-        { name: "Muffin", price: 30, image: "muf.jpg" },
-        { name: "Croissant", price: 40, image: "croi.jpg" },
-        { name: "Sandwich", price: 60, image: "sand.jpg" },
-    ],
-    pastries: [
-        { name: "Cake Slice", price: 55, image: "cake.jpg" },
-        { name: "Crepe", price: 25, image: "crepe.png" },
-        { name: "Brownie", price: 35, image: "brown.jpg" },
-    ],
-    drinks: [
-        { name: "Fruit Soda", price: 20, image: "soda.jpg" },
-        { name: "Juice", price: 30, image: "https://www.washingtonpost.com/resizer/zk-E64X-4r27BqE-WRu7budR2NQ=/arc-anglerfish-washpost-prod-washpost/public/OOIW7IWK6MI6ZN7OOTYJ3AT4UY.jpg" },
-        { name: "Water", price: 15, image: "https://i.pinimg.com/736x/e7/a8/5e/e7a85eaf59cdb09fc3894fccd76cadd8.jpg" },
-    ],
-    tea: [
-        { name: "Black Tea", price: 45, image: "https://via.placeholder.com/150?text=BlackTea" },
-        { name: "Green Tea", price: 45, image: "https://via.placeholder.com/150?text=GreenTea" },
-        { name: "Herbal Tea", price: 50, image: "https://via.placeholder.com/150?text=HerbalTea" },
-        { name: "Matcha/berry", price: 95, image: "https://www.acozykitchen.com/wp-content/uploads/2025/03/StrawberryMatchaLatte-1.jpg" },
-    ],
-    smoothies: [
-        { name: "Fruit Smoothie", price: 100, image: "https://via.placeholder.com/150?text=FruitSmoothie" },
-        { name: "Green Smoothie", price: 110, image: "https://via.placeholder.com/150?text=GreenSmoothie" },
-        { name: "Protein Smoothie", price: 120, image: "https://via.placeholder.com/150?text=ProteinSmoothie" },
-    ],
-    extras: [
-        { name: "Cream", price: 10, image: "https://via.placeholder.com/150?text=Cream" },
-        { name: "Sugar", price: 5, image: "https://via.placeholder.com/150?text=Sugar" },
-        { name: "Milk", price: 10, image: "https://via.placeholder.com/150?text=Milk" },
-    ],
-};
+        let basket = [];
+        let totalItemsInBasket = 0;
+        let orderTotal = 0.00;
+        let currentCategory = 'coffee'; // Set initial category
+        let currentOrderType = '';
+        let paymentSuccessful = false;
 
-menuCategories.forEach(category => {
-    category.addEventListener('click', function() {
-        menuCategories.forEach(c => c.classList.remove('active'));
-        this.classList.add('active');
-        currentCategory = this.dataset.category;
-        updateMenu(currentCategory);
+        const menuData = {
+            coffee: [
+                { name: "Espresso", price: 50, image: "https://www.lasabbq.com/cdn/shop/products/espresso.jpg?v=1660633495&width=823" },
+                { name: "Latte", price: 80, image: "kps.jpg" },
+                { name: "Cappuccino", price: 75, image: "https://blogstudio.s3.theshoppad.net/coffeeheroau/a450e2617a5f31cf16d3a178f9cf8451.jpg" },
+                { name: "Iced Latte", price: 90, image: "ays late.jpg" },
+                { name: "Iced Americano", price: 85, image: "ame.jpg" },
+                { name: "Iced Caramel Macchiato", price: 110, image: "https://awsimages.detik.net.id/community/media/visual/2022/07/18/caramel-latte-vs-caramel-macchiato-1.jpeg?w=1200" },
+            ],
+            snacks: [
+                { name: "Muffin", price: 30, image: "muf.jpg" },
+                { name: "Croissant", price: 40, image: "croi.jpg" },
+                { name: "Sandwich", price: 60, image: "sand.jpg" },
+            ],
+            pastries: [
+                { name: "Cake Slice", price: 55, image: "cake.jpg" },
+                { name: "Crepe", price: 25, image: "crepe.png" },
+                { name: "Brownie", price: 35, image: "brown.jpg" },
+            ],
+            drinks: [
+                { name: "Fruit Soda", price: 20, image: "soda.jpg" },
+                { name: "Juice", price: 30, image: "https://www.washingtonpost.com/resizer/zk-E64X-4r27BqE-WRu7budR2NQ=/arc-anglerfish-washpost-prod-washpost/public/OOIW7IWK6MI6ZN7OOTYJ3AT4UY.jpg" },
+                { name: "Water", price: 15, image: "https://i.pinimg.com/736x/e7/a8/5e/e7a85eaf59cdb09fc3894fccd76cadd8.jpg" },
+            ],
+            tea: [
+                { name: "Black Tea", price: 45, image: "https://www.shutterstock.com/image-photo/black-tea-cup-glass-dried-600nw-2567696105.jpg" },
+                { name: "Green Tea", price: 45, image: "https://d2jx2rerrg6sh3.cloudfront.net/image-handler/picture/2021/9/shutterstock_251566309.jpg" },
+                { name: "Herbal Tea", price: 50, image: "https://teaandleaves.co.uk/cdn/shop/collections/Double_Walled_Tea.jpg?v=1700649867" },
+                { name: "Matcha/berry", price: 95, image: "https://www.acozykitchen.com/wp-content/uploads/2025/03/StrawberryMatchaLatte-1.jpg" },
+            ],
+            smoothies: [
+                { name: "Fruit Smoothie", price: 100, image: "https://lilluna.com/wp-content/uploads/2022/10/fruit-smoothie-resize-14.jpg" },
+                { name: "Green Smoothie", price: 110, image: "https://images.squarespace-cdn.com/content/v1/5df04a627f175b0bc9e43493/1598492106385-8ISGFU6ZO8FT9QF7BLGJ/Kale_Pineapple_Mango_Smoothie_Tropical_Peaches_Easy" },
+                { name: "Protein Smoothie", price: 120, image: "https://premierprotein.imgix.net/p/a/recipes/PP_May_Berry_Smoothie_CA.jpg?ar=376%3A211&auto=format%2Ccompress&fit=crop&ixlib=php-3.1.0&s=0b6d518c3f5844e26da13dbd8a35e435" },
+            ],
+            extras: [
+                { name: "Cream", price: 10, image: "https://realfoodrn.com/wp-content/uploads/2021/03/whipped-cream-scaled-scaled.jpg" },
+                { name: "Sugar", price: 5, image: "https://www.tasteofhome.com/wp-content/uploads/2019/11/sugar-shutterstock_615908132.jpg" },
+                { name: "Milk", price: 10, image: "https://www.saharafresh.com.au/cdn/shop/collections/MILK.jpg?v=1636937330&width=1296" },
+            ],
+        };
+
+        menuCategories.forEach(category => {
+            category.addEventListener('click', function() {
+                menuCategories.forEach(c => c.classList.remove('active'));
+                this.classList.add('active');
+                currentCategory = this.dataset.category;
+                updateMenu(currentCategory);
     });
 });
 
@@ -335,22 +389,79 @@ showBasketButton.addEventListener('click', () => {
 placeOrderButton.addEventListener('click', () => {
     if (basket.length === 0) {
         alert('Your basket is empty! Add some items to place an order.');
-    } else {
-        alert(`Your order of ₱${orderTotal} has been placed!`);
-        basket = [];
-        totalItemsInBasket = 0;
-        orderTotal = 0.00;
-        basketItemCountSpan.textContent = totalItemsInBasket;
-        orderTotalSpan.textContent = `₱ ${orderTotal}`;
-        const menuItems = document.querySelectorAll('.menu-item-card');
-        menuItems.forEach(itemCard => {
-            const quantityInput = itemCard.querySelector('.item-quantity');
-            quantityInput.value = 0;
+        return;
+    }
+
+    const orderType = prompt(
+        "Choose your order type:\n" +
+        "1. Dine In\n" +
+        "2. Take Out\n" +
+        "Enter the number corresponding to your choice:"
+    );
+
+    if (orderType === '1' || orderType === '2') {
+        const orderTypeText = orderType === '1' ? 'Dine In' : 'Take Out';
+        let orderSummary = `Order Type: ${orderTypeText}\n\nReview your order:\n`;
+        basket.forEach(item => {
+            orderSummary += `${item.name}: ${item.quantity} x ₱${item.price} = ₱${(item.quantity * item.price).toFixed(2)}\n`;
         });
+        orderSummary += `\nTotal: ₱${orderTotal}`;
+
+        const confirmOrder = confirm(`${orderSummary}\n\nDo you want to place this order?`);
+
+        if (confirmOrder) {
+            const paymentMethod = prompt(
+                `Your order total is ₱${orderTotal}. How would you like to pay?\n` +
+                `1. Bank Transfer (Simulated)\n` +
+                `2. Online Payment (Simulated)\n` +
+                `Enter the number corresponding to your choice:`
+            );
+
+            let paymentSuccessful = false;
+
+            if (paymentMethod === '1') {
+                const confirmPayment = confirm(`Simulating Bank Transfer for ₱${orderTotal}...\nClick 'OK' after you have made the simulated deposit.`);
+                if (confirmPayment) {
+                    alert('Payment confirmed. Processing your order...');
+                    paymentSuccessful = true;
+                } else {
+                    alert('Payment not confirmed. Order not placed.');
+                }
+            } else if (paymentMethod === '2') {
+                const confirmPayment = confirm(`Simulating Online Payment of ₱${orderTotal}...\nClick 'OK' to simulate successful payment.`);
+                if (confirmPayment) {
+                    alert('Payment successful! Processing your order...');
+                    paymentSuccessful = true;
+                } else {
+                    alert('Payment failed. Order not placed.');
+                }
+            } else if (paymentMethod) {
+                alert('Invalid payment method selected. Order not placed.');
+            }
+
+            if (paymentSuccessful) {
+                // Simulate Receipt
+                let receipt = `\n----- MACCHAPELING RECEIPT -----\n`;
+                receipt += `Order Type: ${orderTypeText}\n`;
+                receipt += `Date: ${new Date().toLocaleString('en-PH', { timeZone: 'Asia/Manila' })}\n\n`; // Using Philippine time
+                basket.forEach(item => {
+                    receipt += `${item.name} x ${item.quantity} @ ₱${item.price.toFixed(2)} = ₱${(item.quantity * item.price).toFixed(2)}\n`;
+                });
+                receipt += `\nTotal: ₱${orderTotal}\n`;
+                receipt += `Thank you for your order!\n`;
+                receipt += `----- End of Receipt -----\n`;
+                alert(receipt);
+                resetOrder();
+            }
+        } else {
+            alert('Order cancelled.');
+        }
+    } else if (orderType) {
+        alert('Invalid order type selected. Order not placed.');
     }
 });
 
-restartOrderButton.addEventListener('click', () => {
+function resetOrder() {
     basket = [];
     totalItemsInBasket = 0;
     orderTotal = 0.00;
@@ -361,6 +472,10 @@ restartOrderButton.addEventListener('click', () => {
         const quantityInput = itemCard.querySelector('.item-quantity');
         quantityInput.value = 0;
     });
+}
+
+restartOrderButton.addEventListener('click', () => {
+    resetOrder();
     alert('Order restarted. Your basket is now empty.');
 });
 
